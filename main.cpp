@@ -10,6 +10,8 @@
 #include "screen.hpp"
 #include "task1.hpp"
 #include "task2.hpp"
+#include "task3.hpp"
+#include "task4.hpp"
 #include "com.hpp"
 #include "TPartage.hpp"
 #include <string.h>
@@ -31,45 +33,44 @@ int main(int argc, char *argv[])
     // Création tâches
     TTask1 *task1 = new TTask1("Task 1",screen,SCHED_FIFO,90,0);
     TTask2 *task2 = new TTask2("Task 2",screen,SCHED_FIFO,89,0);
-  SharedState *shared = SharedState::getInstance();
-  shared->initTasksThreeAndFour(screen);
+  // start consumer tasks (Task3 and Task4)
+  TTask3 *task3 = new TTask3("Task 3",screen,SCHED_FIFO,88,0);
+  TTask4 *task4 = new TTask4("Task 4",screen,SCHED_FIFO,87,0);
    
     // Démarrage tâches
 
     task1->start();
     task2->start();
-  shared->startTaskThree();
-  shared->startTaskFour();
+  task3->start();
+  task4->start();
     screen->dispStr(0,1,t1);
     screen->dispStr(0,2,t2);
     // Traitement tâche principale
     do
       {
-      // Traitement
-      
+      // check keyboard
       if(clavier->kbhit())
-		    {
-		    car = clavier->getch();
-		    }
-        if(car == '1')
         {
-          SharedState *shared = SharedState::getInstance();
-          shared->setTaskOne(true);
-          car = 0;
+        car = clavier->getch();
         }
-        else if(car == '2')
-        {
-          SharedState *shared = SharedState::getInstance();
-          shared->setTaskTwo(true);
-          car = 0;
-        }
-        else if(car == '0')
-        {
-          SharedState *shared = SharedState::getInstance();
-          shared->setTaskOne(false);
-          car = 0;
-        }
-        
+
+      TPartage *shared = TPartage::getInstance();
+      // toggle protection
+      if(car == 'p' || car == 'P'){
+        shared->setProtectionEnabled(!shared->isProtectionEnabled());
+        car = 0;
+      }
+
+      // show counters
+      uint32_t ok = shared->getControleOk();
+      uint32_t bad = shared->getControleBad();
+      screen->dispStr(0,10,"Controle OK:");
+      screen->dispStr(15,10,ok);
+      screen->dispStr(0,11,"Controle BAD:");
+      screen->dispStr(15,11,bad);
+
+      usleep(200000);
+
       }
     while( (car != 'q') && (car != 'Q') );
 

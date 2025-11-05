@@ -8,7 +8,7 @@
 
 #include "task1.hpp"
 #include "TPartage.hpp"
-#define delay 1000000
+#define DELAY 1000000
 TTask1::TTask1(const char *name,void *shared,int policy,int priority,int32_t cpu) :
                                                             TThread(name,shared,policy,priority,cpu)
     {
@@ -26,18 +26,37 @@ void TTask1::task(void)
 
         while(1)
         {
-                SharedState *shared = SharedState::getInstance();
+            // Producer: fills tab1 (99 random bytes + checksum), sleeps 100ms, then tab2
+            TPartage *shared = TPartage::getInstance();
 
-            // show blocked next to name and wait until triggered
-                while(!shared->isTaskOneOn())
-            {
-                screen->dispStr(8,3,"BLOQUER      ");
-                usleep(delay/10);
+            screen->dispStr(8,3,"PRODUCER 1   ");
+            uint8_t buf[100];
+            uint8_t sum = 0;
+            for(int i=0;i<99;i++){
+                buf[i] = (uint8_t)(rand() & 0xFF);
+                sum += buf[i];
             }
+            buf[99] = (uint8_t)(~sum + 1);
 
-            // when triggered, show execution, sleep 1s, then clear trigger
-            screen->dispStr(8,3,"EXECUTION    ");
-            usleep(delay);
-                shared->setTaskOne(false);
+            // protected write
+            shared->protectTab1();
+            shared->setTab1(buf);
+            shared->unProtectTab1();
+
+            usleep(100000); // 100 ms
+
+            // produce second buffer
+            sum = 0;
+            for(int i=0;i<99;i++){
+                buf[i] = (uint8_t)(rand() & 0xFF);
+                sum += buf[i];
+            }
+            buf[99] = (uint8_t)(~sum + 1);
+
+            shared->protectTab2();
+            shared->setTab2(buf);
+            shared->unProtectTab2();
+
+            usleep(100000); // 100 ms then repeat
         }
     }

@@ -1,16 +1,13 @@
-// ewood
-
+// Producer 2: similar behaviour to task1
 #include "task2.hpp"
-#include "task3.hpp"
 #include "TPartage.hpp"
-#include "sem.hpp"
-#define UNE_SECONDE 1000000
+#define DELAY2 1000000
 
 TTask2::TTask2(const char *name,void *shared,int policy,int priority,int32_t cpu) :
                                                            TThread(name,shared,policy,priority,cpu)
     {
-	    screen = (TScreen *)shared;
-        screen->dispStr(1,4,name);
+    screen = (TScreen *)shared;
+    screen->dispStr(1,4,name);
     }
 
 TTask2::~TTask2()
@@ -18,33 +15,36 @@ TTask2::~TTask2()
     }
 
 void TTask2::task(void)
-        {
-        signalStart();
-
-        while(1)
-        {
-            SharedState *shared = SharedState::getInstance();
-            // wait until triggered
-            while(!shared->isTaskTwoOn())
-            {
-                screen->dispStr(8,4,"BLOQUER      ");
-                usleep(UNE_SECONDE/10);
-            }
-
-            // take semaphore, execute for 2s, trigger task3 and release
-            shared->acquire();
-            screen->dispStr(8,4,"EXECUTION    ");
-            usleep(UNE_SECONDE*2);
-            shared->setTaskThree(true);
-            shared->release();
-
-            // wait until task3 clears its flag before resetting our own
-            while(shared->isTaskThreeOn())
-                usleep(10);
-
-            shared->acquire();
-            usleep(UNE_SECONDE*2);
-            shared->setTaskTwo(false);
-            shared->release();
+    {
+    signalStart();
+    while(1)
+    {
+        TPartage *shared = TPartage::getInstance();
+        screen->dispStr(8,4,"PRODUCER 2   ");
+        uint8_t buf[100];
+        uint8_t sum = 0;
+        for(int i=0;i<99;i++){
+            buf[i] = (uint8_t)(rand() & 0xFF);
+            sum += buf[i];
         }
+        buf[99] = (uint8_t)(~sum + 1);
+
+        shared->protectTab1();
+        shared->setTab1(buf);
+        shared->unProtectTab1();
+
+        usleep(100000);
+
+        sum = 0;
+        for(int i=0;i<99;i++){
+            buf[i] = (uint8_t)(rand() & 0xFF);
+            sum += buf[i];
+        }
+        buf[99] = (uint8_t)(~sum + 1);
+        shared->protectTab2();
+        shared->setTab2(buf);
+        shared->unProtectTab2();
+
+        usleep(100000);
+    }
     }

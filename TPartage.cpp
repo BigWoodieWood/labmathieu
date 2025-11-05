@@ -1,79 +1,102 @@
-// ewood
-
+// Simple implementation of TPartage singleton for the mutex lab
 #include "TPartage.hpp"
-#include "task3.hpp"
-#include "task4.hpp"
-SharedState::SharedState()
+#include <string.h>
+
+TPartage::TPartage()
 {
-    taskOneOn = false;
-    taskTwoOn = false;
-    taskThreeOn = false;
-    taskFourOn = false;
-    sem = nullptr;  
-    task3 = nullptr;
-    task4 = nullptr;
-    screen = nullptr;
-}
-void SharedState::initTasksThreeAndFour(void *shared)
-{
-    screen = (TScreen *)shared;
-    task3 = new TTask3("Task 3",screen,SCHED_FIFO,88,0);
-    task4 = new TTask4("Task 4",screen,SCHED_FIFO,87,0);
-    sem = new TSemaphore(1);
-}
-bool SharedState::isTaskOneOn()
-{
-    return taskOneOn;
+    controleOk = 0;
+    controleBad = 0;
+    memset(tab1,0,sizeof(tab1));
+    memset(tab2,0,sizeof(tab2));
+    protectionEnabled = true;
 }
 
-void SharedState::setTaskOne(bool val)
+TPartage::~TPartage()
 {
-    taskOneOn = val;
 }
-void SharedState::setTaskTwo(bool val)
+
+void TPartage::getTab1(uint8_t *pTab, copy_t type)
 {
-    taskTwoOn = val;
+    if(type == FULL) memcpy(pTab, tab1, 100);
+    else if(type == FIRST_HALF) memcpy(pTab, tab1, 50);
+    else memcpy(pTab, tab1+50, 50);
 }
-bool SharedState::isTaskTwoOn()
+
+void TPartage::setTab1(uint8_t *pTab)
 {
-    return taskTwoOn;
+    memcpy(tab1, pTab, 100);
 }
-void SharedState::setTaskThree(bool val)
+
+void TPartage::getTab2(uint8_t *pTab, copy_t type)
 {
-    taskThreeOn = val;
+    if(type == FULL) memcpy(pTab, tab2, 100);
+    else if(type == FIRST_HALF) memcpy(pTab, tab2, 50);
+    else memcpy(pTab, tab2+50, 50);
 }
-bool SharedState::isTaskThreeOn()
+
+void TPartage::setTab2(uint8_t *pTab)
 {
-    return taskThreeOn;
+    memcpy(tab2, pTab, 100);
 }
-void SharedState::setTaskFour(bool val)
+
+void TPartage::incControleOk(void)
 {
-    taskFourOn = val;
+    mutexCtrl.take();
+    controleOk++;
+    mutexCtrl.release();
 }
-bool SharedState::isTaskFourOn()
+
+void TPartage::incControleBad(void)
 {
-    return taskFourOn;
+    mutexCtrl.take();
+    controleBad++;
+    mutexCtrl.release();
 }
-void SharedState::acquire()
+
+uint32_t TPartage::getControleOk(void)
 {
-    sem->take();
+    uint32_t v;
+    mutexCtrl.take();
+    v = controleOk;
+    mutexCtrl.release();
+    return v;
 }
-void SharedState::release()
+
+uint32_t TPartage::getControleBad(void)
 {
-    sem->release();
+    uint32_t v;
+    mutexCtrl.take();
+    v = controleBad;
+    mutexCtrl.release();
+    return v;
 }
-void SharedState::startTaskThree()
+
+void TPartage::protectTab1(void)
 {
-    task3->start();
+    if(protectionEnabled) mutexTab1.take();
 }
-void SharedState::startTaskFour()
+
+void TPartage::unProtectTab1(void)
 {
-    task4->start();
+    if(protectionEnabled) mutexTab1.release();
 }
-SharedState::~SharedState()
+
+void TPartage::protectTab2(void)
 {
-    delete task3;
-    delete task4;
-    if(sem)
-        delete sem;
+    if(protectionEnabled) mutexTab2.take();
+}
+
+void TPartage::unProtectTab2(void)
+{
+    if(protectionEnabled) mutexTab2.release();
+}
+
+void TPartage::setProtectionEnabled(bool en)
+{
+    protectionEnabled = en;
+}
+
+bool TPartage::isProtectionEnabled(void)
+{
+    return protectionEnabled;
 }
