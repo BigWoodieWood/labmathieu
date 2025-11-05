@@ -30,12 +30,24 @@ void TTask4::task()
     while(true)
     {
         TPartage *shared = TPartage::getInstance();
-        screen->dispStr(8,6,"CONSUMER 2   ");
+        {
+            char lbl[64];
+            const char *txt = shared->isProtectionEnabled() ? "CONSUMER 2" : "CONSUMER 2 [UNPROT]";
+            /* Use a wide fixed field to fully clear previous longer labels */
+            snprintf(lbl, sizeof(lbl), "%-32s", txt);
+            screen->dispStr(8,6,lbl);
+        }
 
-        shared->protectTab1();
-        shared->getTab1(buf, TPartage::FULL);
-        usleep(CONSUMER_SLEEP_MID);
-        shared->unProtectTab1();
+        if (shared->isProtectionEnabled()) {
+            bool locked = shared->protectTab1();
+            shared->getTab1(buf, TPartage::FULL);
+            usleep(100000);
+            shared->unProtectTab1(locked);
+        } else {
+            shared->getTab1(buf, TPartage::FIRST_HALF);
+            usleep(CONSUMER_SLEEP_MID);
+            shared->getTab1(buf + 50, TPartage::SECOND_HALF);
+        }
 
         uint8_t sum = 0;
         for(int i=0;i<99;i++) sum += buf[i];
@@ -45,10 +57,16 @@ void TTask4::task()
 
         usleep(BETWEEN_TAB_SLEEP);
 
-        shared->protectTab2();
-        shared->getTab2(buf, TPartage::FULL);
-        usleep(CONSUMER_SLEEP_MID);
-        shared->unProtectTab2();
+        if (shared->isProtectionEnabled()) {
+            bool locked2 = shared->protectTab2();
+            shared->getTab2(buf, TPartage::FULL);
+            usleep(CONSUMER_SLEEP_MID);
+            shared->unProtectTab2(locked2);
+        } else {
+            shared->getTab2(buf, TPartage::FIRST_HALF);
+            usleep(CONSUMER_SLEEP_MID);
+            shared->getTab2(buf + 50, TPartage::SECOND_HALF);
+        }
 
         sum = 0;
         for(int i=0;i<99;i++) sum += buf[i];

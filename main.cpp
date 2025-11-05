@@ -12,16 +12,12 @@
 #include "task2.hpp"
 #include "task3.hpp"
 #include "task4.hpp"
-#include "com.hpp"
 #include "TPartage.hpp"
 #include <string.h>
-#include <iostream>
-using namespace std;
-string t1 = "1: trigger task 1";
-string t2 = "2: trigger task 2";
 int main(int argc, char *argv[])
     {
-    char car;
+  (void)argc; (void)argv; // parameters unused in this program
+  char car = 0;
 
   TThread::initTaskMain(SCHED_FIFO,0);
 
@@ -43,8 +39,6 @@ int main(int argc, char *argv[])
     task2->start();
   task3->start();
   task4->start();
-    screen->dispStr(0,1,t1);
-    screen->dispStr(0,2,t2);
     // Traitement tâche principale
     do
       {
@@ -60,14 +54,20 @@ int main(int argc, char *argv[])
         shared->setProtectionEnabled(!shared->isProtectionEnabled());
         car = 0;
       }
+      // explicit OFF/ON
+      if(car == 'o' || car == 'O'){ shared->setProtectionEnabled(false); car = 0; }
+      if(car == 'i' || car == 'I'){ shared->setProtectionEnabled(true);  car = 0; }
 
-      // show counters
-      uint32_t ok = shared->getControleOk();
-      uint32_t bad = shared->getControleBad();
-      screen->dispStr(0,10,"Controle OK:");
-      screen->dispStr(15,10,ok);
-      screen->dispStr(0,11,"Controle BAD:");
-      screen->dispStr(15,11,bad);
+  // show counters and protection state
+  uint32_t ok = shared->getControleOk();
+  uint32_t bad = shared->getControleBad();
+  /* Moved counters up since top trigger lines were removed */
+  screen->dispStr(0,1,"Controle OK:");
+  screen->dispStr(15,1,ok);
+  screen->dispStr(0,2,"Controle BAD:");
+  screen->dispStr(15,2,bad);
+  screen->dispStr(0,3,"Protection:");
+  screen->dispStr(15,3, shared->isProtectionEnabled() ? "ON " : "OFF");
 
       usleep(200000);
 

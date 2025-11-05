@@ -40,18 +40,21 @@ public:
 
     void getTab1(uint8_t *pTab, copy_t type);
     void setTab1(uint8_t *pTab);
+    void setTab1(uint8_t *pTab, copy_t type);
     void getTab2(uint8_t *pTab, copy_t type);
     void setTab2(uint8_t *pTab);
+    void setTab2(uint8_t *pTab, copy_t type);
 
     void incControleOk(void);
     void incControleBad(void);
     uint32_t getControleOk(void);
     uint32_t getControleBad(void);
 
-    void protectTab1(void);
-    void unProtectTab1(void);
-    void protectTab2(void);
-    void unProtectTab2(void);
+    // protectTabX returns true if it actually acquired the mutex
+    bool protectTab1(void);
+    void unProtectTab1(bool locked);
+    bool protectTab2(void);
+    void unProtectTab2(bool locked);
     void setProtectionEnabled(bool en);
     bool isProtectionEnabled(void);
 };

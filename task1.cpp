@@ -29,7 +29,13 @@ void TTask1::task(void)
             // Producer: fills tab1 (99 random bytes + checksum), sleeps 100ms, then tab2
             TPartage *shared = TPartage::getInstance();
 
-            screen->dispStr(8,3,"PRODUCER 1   ");
+            {
+                char lbl[64];
+                const char *txt = shared->isProtectionEnabled() ? "PRODUCER 1" : "PRODUCER 1 [UNPROT]";
+                /* Use a wide fixed field to fully clear previous longer labels */
+                snprintf(lbl, sizeof(lbl), "%-32s", txt);
+                screen->dispStr(8,3,lbl);
+            }
             uint8_t buf[100];
             uint8_t sum = 0;
             for(int i=0;i<99;i++){
@@ -38,10 +44,16 @@ void TTask1::task(void)
             }
             buf[99] = (uint8_t)(~sum + 1);
 
-            // protected write
-            shared->protectTab1();
-            shared->setTab1(buf);
-            shared->unProtectTab1();
+            // write tab1
+            if (shared->isProtectionEnabled()) {
+                bool locked = shared->protectTab1();
+                shared->setTab1(buf);
+                shared->unProtectTab1(locked);
+            } else {
+                shared->setTab1(buf, TPartage::FIRST_HALF);
+                usleep(100000);
+                shared->setTab1(buf + 50, TPartage::SECOND_HALF);
+            }
 
             usleep(100000); // 100 ms
 
@@ -53,9 +65,15 @@ void TTask1::task(void)
             }
             buf[99] = (uint8_t)(~sum + 1);
 
-            shared->protectTab2();
-            shared->setTab2(buf);
-            shared->unProtectTab2();
+            if (shared->isProtectionEnabled()) {
+                bool locked = shared->protectTab2();
+                shared->setTab2(buf);
+                shared->unProtectTab2(locked);
+            } else {
+                shared->setTab2(buf, TPartage::FIRST_HALF);
+                usleep(100000);
+                shared->setTab2(buf + 50, TPartage::SECOND_HALF);
+            }
 
             usleep(100000); // 100 ms then repeat
         }

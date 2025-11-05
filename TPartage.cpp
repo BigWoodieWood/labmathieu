@@ -27,6 +27,13 @@ void TPartage::setTab1(uint8_t *pTab)
     memcpy(tab1, pTab, 100);
 }
 
+void TPartage::setTab1(uint8_t *pTab, copy_t type)
+{
+    if (type == FIRST_HALF) memcpy(tab1, pTab, 50);
+    else if (type == SECOND_HALF) memcpy(tab1 + 50, pTab, 50);
+    else memcpy(tab1, pTab, 100);
+}
+
 void TPartage::getTab2(uint8_t *pTab, copy_t type)
 {
     if(type == FULL) memcpy(pTab, tab2, 100);
@@ -37,6 +44,13 @@ void TPartage::getTab2(uint8_t *pTab, copy_t type)
 void TPartage::setTab2(uint8_t *pTab)
 {
     memcpy(tab2, pTab, 100);
+}
+
+void TPartage::setTab2(uint8_t *pTab, copy_t type)
+{
+    if (type == FIRST_HALF) memcpy(tab2, pTab, 50);
+    else if (type == SECOND_HALF) memcpy(tab2 + 50, pTab, 50);
+    else memcpy(tab2, pTab, 100);
 }
 
 void TPartage::incControleOk(void)
@@ -71,32 +85,58 @@ uint32_t TPartage::getControleBad(void)
     return v;
 }
 
-void TPartage::protectTab1(void)
+// Try to acquire protection for tab1. Returns true if the mutex was acquired.
+bool TPartage::protectTab1(void)
 {
-    if(protectionEnabled) mutexTab1.take();
+    bool prot;
+    mutexCtrl.take();
+    prot = protectionEnabled;
+    mutexCtrl.release();
+
+    if (prot) {
+        mutexTab1.take();
+        return true;
+    }
+    return false;
 }
 
-void TPartage::unProtectTab1(void)
+void TPartage::unProtectTab1(bool locked)
 {
-    if(protectionEnabled) mutexTab1.release();
+    if (locked) mutexTab1.release();
 }
 
-void TPartage::protectTab2(void)
+// Try to acquire protection for tab2. Returns true if the mutex was acquired.
+bool TPartage::protectTab2(void)
 {
-    if(protectionEnabled) mutexTab2.take();
+    bool prot;
+    mutexCtrl.take();
+    prot = protectionEnabled;
+    mutexCtrl.release();
+
+    if (prot) {
+        mutexTab2.take();
+        return true;
+    }
+    return false;
 }
 
-void TPartage::unProtectTab2(void)
+void TPartage::unProtectTab2(bool locked)
 {
-    if(protectionEnabled) mutexTab2.release();
+    if (locked) mutexTab2.release();
 }
 
 void TPartage::setProtectionEnabled(bool en)
 {
+    mutexCtrl.take();
     protectionEnabled = en;
+    mutexCtrl.release();
 }
 
 bool TPartage::isProtectionEnabled(void)
 {
-    return protectionEnabled;
+    bool v;
+    mutexCtrl.take();
+    v = protectionEnabled;
+    mutexCtrl.release();
+    return v;
 }
