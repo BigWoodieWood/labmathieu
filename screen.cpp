@@ -194,9 +194,9 @@ void TScreen::openDisplay(void)
 		{
 		closeDisplay();
 		}
-	if( (queueDisplay = mq_open("/qDisplay",O_CREAT | O_RDWR,0,&attrQueue)) < 0)
+	if( (queueDisplay = mq_open("/qDisplay",O_CREAT | O_RDWR,0666,&attrQueue)) < 0)
 		{
-		fprintf(stderr,"Error: code from mq_open (Thread : %s)\n",thread.name);
+		fprintf(stderr,"Error: mq_open failed (Thread : %s). Ensure /dev/mqueue is mounted and user has permissions.\n",thread.name);
 		exit(1);
 		}
 
@@ -241,7 +241,7 @@ void TScreen::task(void)
 
 			if( (message != NULL) && (message->buffer != NULL) )
 			{
-			printf("%c[%d;%dH%s",0x1B,message.y,message.x,message.buffer);
+			printf("%c[%d;%dH%s",0x1B,message->y,message->x,message->buffer);
 			fflush(stdout);
 			}
 		#endif

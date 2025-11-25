@@ -34,6 +34,8 @@ private:
     TMutex mutexTab2;
     TMutex mutexCtrl;
     bool protectionEnabled;
+    bool modules[6]; // state of 6 modules (false=OFF, true=ON)
+    TMutex mutexModules;
 
 public:
     enum copy_t { FULL, FIRST_HALF, SECOND_HALF };
@@ -57,6 +59,11 @@ public:
     void unProtectTab2(bool locked);
     void setProtectionEnabled(bool en);
     bool isProtectionEnabled(void);
+    // Module state management
+    bool getModule(uint8_t idx); // idx 0..5
+    void setModule(uint8_t idx, bool state);
+    bool toggleModule(uint8_t idx); // returns new state
+    void getModules(bool *dest6); // bulk copy
 };
 
 #endif // TPARTAGE_HPP

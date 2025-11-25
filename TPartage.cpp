@@ -9,6 +9,7 @@ TPartage::TPartage()
     memset(tab1,0,sizeof(tab1));
     memset(tab2,0,sizeof(tab2));
     protectionEnabled = true;
+    for(int i=0;i<6;i++) modules[i] = false; // all OFF initially
 }
 
 TPartage::~TPartage()
@@ -139,4 +140,39 @@ bool TPartage::isProtectionEnabled(void)
     v = protectionEnabled;
     mutexCtrl.release();
     return v;
+}
+
+bool TPartage::getModule(uint8_t idx)
+{
+    if(idx >= 6) return false;
+    mutexModules.take();
+    bool v = modules[idx];
+    mutexModules.release();
+    return v;
+}
+
+void TPartage::setModule(uint8_t idx, bool state)
+{
+    if(idx >= 6) return;
+    mutexModules.take();
+    modules[idx] = state;
+    mutexModules.release();
+}
+
+bool TPartage::toggleModule(uint8_t idx)
+{
+    if(idx >= 6) return false;
+    mutexModules.take();
+    modules[idx] = !modules[idx];
+    bool v = modules[idx];
+    mutexModules.release();
+    return v;
+}
+
+void TPartage::getModules(bool *dest6)
+{
+    if(!dest6) return;
+    mutexModules.take();
+    for(int i=0;i<6;i++) dest6[i] = modules[i];
+    mutexModules.release();
 }

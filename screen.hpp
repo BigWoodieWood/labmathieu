@@ -15,8 +15,8 @@
 #define QUEUE_KERNEL  0
 #define QUEUE_LOCAL   1
 
-#define USE_QUEUE QUEUE_KERNEL
-//#define USE_QUEUE QUEUE_LOCAL
+#define USE_QUEUE QUEUE_LOCAL
+//#define USE_QUEUE QUEUE_KERNEL
 #define MUT_ALLOC
 
 #include <stdint.h>
