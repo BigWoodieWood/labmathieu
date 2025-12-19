@@ -7,12 +7,15 @@
 #include "clavier.hpp"
 #include <cstdio>
 #include <cstring>
+#include <chrono>
 
 TComSerial::TComSerial(const char *name, TScreen *screenPtr, int priority,
                        baudrate_t baudRate, parity_t parite, dimData_t dimData,
                        int32_t timeoutRxMs)
     : TCom(name, (void *)screenPtr, priority, baudRate, parite, dimData, timeoutRxMs)
     {
+    // initialize last receive timestamp
+    lastRxTime = std::chrono::steady_clock::now();
       
     // Display the configured port name on startup
     const std::string &port = TConfiguration::getInstance()->getServerAddress();
@@ -28,6 +31,8 @@ TComSerial::~TComSerial()
 
 void TComSerial::rxCar(unsigned char car)
 {
+    // update timestamp of last received character
+    lastRxTime = std::chrono::steady_clock::now();
     // Clear timeout error if shown
     if(errorDisplayed){
         if(screen)
